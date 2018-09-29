@@ -25,7 +25,6 @@ def bar_chart(feature):
     df.plot(kind='bar',stacked=True, figsize=(10,5))
     plt.show()
 
-
 trainTestData = [train, test] # combining train and test dataset
 
 for dataset in trainTestData: # 이름에서 Mr. Mrs. Miss. 등만 추출하여 title로 저장
@@ -86,4 +85,11 @@ for dataset in trainTestData:
 train["Fare"].fillna(train.groupby("Pclass")["Fare"].transform("median"), inplace=True)
 test["Fare"].fillna(test.groupby("Pclass")["Fare"].transform("median"), inplace=True)
 
-# In[53]
+# Fare 구간에 따라 나누기
+for dataset in trainTestData:
+    dataset.loc[ dataset['Fare'] <= 17, 'Fare'] = 0,
+    dataset.loc[(dataset['Fare'] > 17) & (dataset['Fare'] <= 30), 'Fare'] = 1,
+    dataset.loc[(dataset['Fare'] > 30) & (dataset['Fare'] <= 100), 'Fare'] = 2,
+    dataset.loc[ dataset['Fare'] > 100, 'Fare'] = 3
+
+# In[59]
