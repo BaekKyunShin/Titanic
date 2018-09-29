@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set() # setting saeborn default for plots
@@ -42,9 +43,47 @@ for dataset in trainTestData:
 train.drop('Name', axis=1, inplace=True) # inplace = False는 copy를 만듦, 원본 DF는 변화 없음, True는 원본 DF를 변화시키고, 현 라인에서는 None을 return 함
 test.drop('Name', axis=1, inplace=True)
 
-
 sexMapping = {"male": 0, "female": 1}
 for dataset in trainTestData:
     dataset['Sex'] = dataset['Sex'].map(sexMapping)
 
-# 4.4Age in[33]
+# fill missing age with median age for each title (Mr, Mrs, Miss, Others)
+train["Age"].fillna(train.groupby("Title")["Age"].transform("median"), inplace=True)
+test["Age"].fillna(test.groupby("Title")["Age"].transform("median"), inplace=True)
+
+facet = sns.FacetGrid(train, hue="Survived", aspect=4) # hue: 겹친 형태, aspect: width 결정
+facet.map(sns.kdeplot, 'Age', shade= True) # kdeplot 그래프의 종류, 'Age'칼럼의 값을 plotting
+facet.set(xlim=(0, train['Age'].max()))
+facet.add_legend()
+
+# child: 0,  young: 1,  adult: 2,  mid-age: 3, senior: 4
+for dataset in trainTestData:
+    dataset.loc[ dataset['Age'] <= 16, 'Age'] = 0,
+    dataset.loc[(dataset['Age'] > 16) & (dataset['Age'] <= 26), 'Age'] = 1,
+    dataset.loc[(dataset['Age'] > 26) & (dataset['Age'] <= 36), 'Age'] = 2,
+    dataset.loc[(dataset['Age'] > 36) & (dataset['Age'] <= 62), 'Age'] = 3,
+    dataset.loc[ dataset['Age'] > 62, 'Age'] = 4
+
+'''
+Pclass1 = train[train['Pclass']==1]['Embarked'].value_counts()
+Pclass2 = train[train['Pclass']==2]['Embarked'].value_counts()
+Pclass3 = train[train['Pclass']==3]['Embarked'].value_counts()
+df = pd.DataFrame([Pclass1, Pclass2, Pclass3])
+df.index = ['1st class','2nd class', '3rd class']
+df.plot(kind='bar',stacked=True, figsize=(10,5))
+'''
+
+# 위 결과에서 S embark가 절대 다수이므로 missing embark는 S로 채움
+for dataset in trainTestData:
+    dataset['Embarked'].fillna('S', inplace = True)
+
+# 문자를 숫자로 변환
+embarkedMapping = {"S": 0, "C": 1, "Q": 2}
+for dataset in trainTestData:
+    dataset['Embarked'] = dataset['Embarked'].map(embarkedMapping)
+
+# fill missing Fare with median fare for each Pclass
+train["Fare"].fillna(train.groupby("Pclass")["Fare"].transform("median"), inplace=True)
+test["Fare"].fillna(test.groupby("Pclass")["Fare"].transform("median"), inplace=True)
+
+# In[53]
